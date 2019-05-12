@@ -46,9 +46,9 @@ function parse(src) {
     var coionIdx = firstline.indexOf(':');
     var conf = block.slice(1);
     var flagsline = firstline.slice(coionIdx + 1).trim();
-    var flagsMh = flagsline.match(/^flags=[0-9]+<{1}([A-Z,]*)>{1} mtu ([0-9]+)/);
+    var flagsMh = flagsline.match(/^flags=[0-9]+<([A-Z,]*)> mtu ([0-9]+)/);
 
-    ret.name = firstline.slice(0, coionIdx - 1);
+    ret.name = firstline.slice(0, coionIdx);
     ret.flags = flagsMh[1].split(',');
     ret.mtu = parseInt(flagsMh[2], 10);
     conf.forEach(function (item) {
@@ -89,7 +89,8 @@ const getConfig = () => new Promise((resolve, reject) => {
 describe('parse ifconfig', () => {
   it('show result', async () => {
     const result = await getConfig();
-    const target = result.find(res => res.name === 'en');
-    console.log(target.mtu);
+    result.forEach(item => {
+      console.log(`${item.name}: ${item.mtu}`);
+    });
   });
 });
