@@ -1,16 +1,6 @@
 const { describe, it } = require('mocha');
 const exec = require('child_process').exec;
 
-function getConfig(callback) {
-  exec('ifconfig', function (err, stdout, stderr) {
-    if (err) {
-      return callback(err);
-    } else {
-      callback(null, parse(stdout));
-    }
-  });
-}
-
 var keys = [
   'inet6',
   'inet',
@@ -86,16 +76,20 @@ function parse(src) {
   });
 }
 
-console.log(getConfig(console.log));
+const getConfig = () => new Promise((resolve, reject) => {
+  exec('ifconfig', (error, stdout, stderr) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(parse(stdout));
+    }
+  });
+});
 
-exec('ifconfig en0 mtu 400', function(err, stdout, stderr) {
-  if (err) {
-    console.log('error');
-    console.error(err);
-  } else {
-    console.log('stdout');
-    console.log(stdout);
-    console.log('stderr');
-    console.log(stderr);
-  }
+describe('parse ifconfig', () => {
+  it('show result', async () => {
+    const result = await getConfig();
+    const target = result.find(res => res.name === 'en');
+    console.log(target.mtu);
+  });
 });
