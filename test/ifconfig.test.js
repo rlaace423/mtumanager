@@ -1,7 +1,7 @@
 const { describe, it } = require('mocha');
 const exec = require('child_process').exec;
 
-var keys = [
+const keys = [
   'inet6',
   'inet',
   'prefixlen',
@@ -25,14 +25,14 @@ var keys = [
   'timeout',
   'ipfilter',
   'ifmaxaddr',
-  'flags'
+  'flags',
 ];
 
 function parse(src) {
-  var lines = src.split('\n');
-  var blocks = [];
-  var temp = [];
-  lines.forEach(function (item) {
+  const lines = src.split('\n');
+  const blocks = [];
+  let temp = [];
+  lines.forEach((item) => {
     if (['\t', ' '].indexOf(item[0]) === -1 && temp.length > 0) {
       blocks.push(temp);
       temp = [];
@@ -40,30 +40,26 @@ function parse(src) {
     temp.push(item);
   });
 
-  return blocks.map(function (block) {
-    var ret = {};
-    var firstline = block[0].toString();
-    var coionIdx = firstline.indexOf(':');
-    var conf = block.slice(1);
-    var flagsline = firstline.slice(coionIdx + 1).trim();
-    var flagsMh = flagsline.match(/^flags=[0-9]+<([A-Z,]*)> mtu ([0-9]+)/);
+  return blocks.map((block) => {
+    const ret = {};
+    const firstline = block[0].toString();
+    const coionIdx = firstline.indexOf(':');
+    const conf = block.slice(1);
+    const flagsline = firstline.slice(coionIdx + 1).trim();
+    const flagsMh = flagsline.match(/^flags=[0-9]+<([A-Z,]*)> mtu ([0-9]+)/);
 
     ret.name = firstline.slice(0, coionIdx);
     ret.flags = flagsMh[1].split(',');
     ret.mtu = parseInt(flagsMh[2], 10);
-    conf.forEach(function (item) {
-      var list = item.split(' ').filter(function (item) {
-        return item.length > 0;
-      });
-      var key = null;
-      for (var i = 0; i < list.length; i++) {
-        if (keys.indexOf(list[i] + '') !== -1) {
-          key = (list[i] + '').replace(':', '');
+    conf.forEach((item) => {
+      const list = item.split(' ').filter(target => target.length > 0);
+      let key = null;
+      for (let i = 0; i < list.length; i += 1) {
+        if (keys.indexOf(`${list[i]}`) !== -1) {
+          key = (`${list[i]}`).replace(':', '');
           if (key && !ret[key]) ret[key] = true;
-          continue;
-        }
-        if (key) {
-          ret[key] = list[i] + '';
+        } else if (key) {
+          ret[key] = `${list[i]}`;
         }
       }
     });
@@ -76,8 +72,8 @@ function parse(src) {
   });
 }
 
-const getConfig = () => new Promise((resolve, reject) => {
-  exec('ifconfig', (error, stdout, stderr) => {
+const getNetworkConfig = () => new Promise((resolve, reject) => {
+  exec('ifconfig', (error, stdout) => {
     if (error) {
       reject(error);
     } else {
@@ -88,8 +84,8 @@ const getConfig = () => new Promise((resolve, reject) => {
 
 describe('parse ifconfig', () => {
   it('show result', async () => {
-    const result = await getConfig();
-    result.forEach(item => {
+    const result = await getNetworkConfig();
+    result.forEach((item) => {
       console.log(`${item.name}: ${item.mtu}`);
     });
   });
